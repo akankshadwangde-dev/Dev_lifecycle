@@ -31,6 +31,11 @@ export const HELP: Record<string, HelpTopic> = {
         'Functional consultant and Project manager: read-only views.',
         'Admin: models, connections and the knowledge base.',
       ] },
+      { heading: 'First steps', body: [
+        'Admin: add an AI model under Settings > AI models, then connect Jira, Confluence and your SAP system under Settings > Connections.',
+        'No Jira yet? Use New item on the home screen to add an incident, change or requirement by hand.',
+        'For a demo without real systems, an admin can turn on Sample data under Settings > General.',
+      ] },
       { heading: 'Phase 1 limits', body: [
         'Code is not written to SAP yet: copy or download it. Deploy, ATC review and unit test runs arrive in Phase 2.',
         'Sign-in is a role picker; single sign-on arrives in Phase 2.',
@@ -46,7 +51,7 @@ export const HELP: Record<string, HelpTopic> = {
       ] },
       { heading: 'All work', body: [
         'Every ticket in the project. Filter by type. Open a row to see its flow.',
-        'Sync pulls new tickets from Jira. In demo mode it uses sample tickets.',
+        'Sync from Jira pulls new tickets once Jira is connected. New item adds one by hand.',
       ] },
     ],
   },
@@ -117,7 +122,20 @@ export const HELP: Record<string, HelpTopic> = {
         'Test a SAP connection to detect its release. Cloud and Full use ADT. Hybrid (7.02–7.31) and Basic (older) read over RFC.',
       ] },
       { heading: 'Secrets', body: ['Enter a reference such as env:JIRA_TOKEN, and set that environment variable on the server.'] },
-      { heading: 'Demo mode', body: ['Without a connection of a type, demo mode uses sample data for it.'] },
+      { heading: 'Sample data', body: ['With Sample data switched on (Settings > General), sample tickets, pages and SAP code stand in for any system that is not connected.'] },
+    ],
+  },
+  settings: {
+    title: 'Settings',
+    intro: 'Everyone can see the settings. Only the Admin role can change them.',
+    sections: [
+      { heading: 'General', body: [
+        'Project name.',
+        'Target SAP release: the syntax generated code must follow while no SAP system is connected. The release of a connected system always wins.',
+        'Sample data: sample tickets, Confluence pages, SAP code and a sample model for demos. Turning it off removes them again.',
+      ] },
+      { heading: 'AI models', body: ['Which models the studio may use, and what data each may receive. See the Models topic.'] },
+      { heading: 'Connections', body: ['Jira, Confluence and SAP systems. See the Connections topic.'] },
     ],
   },
   audit: {

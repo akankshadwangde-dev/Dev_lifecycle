@@ -24,8 +24,19 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Demo mode is on by default: five sample tickets, Confluence pages, SAP
-code and a sample model, so the whole flow works without any real system. Try:
+On Windows you can also double-click `start-dev.cmd`, which opens both servers and the browser.
+
+Open http://localhost:5173. The studio starts empty. The home screen shows a short setup list:
+
+1. Switch **Role** to **Admin** (top bar) and open **Settings**.
+2. **AI models**: add a model. **Connections**: add Jira, Confluence and your SAP system.
+3. No Jira yet? Use **New item** on the home screen to add an incident, change or requirement by hand.
+
+### Sample data for demos
+
+An admin can turn on **Sample data** under Settings > General: five sample tickets, Confluence pages,
+SAP code and a sample model, so the whole flow works without any real system. Turning it off removes
+all of it again. With sample data on, try:
 
 1. Role **AMS consultant** → open **INC-4471** → *Start analysis* → *Hand off to developer*
 2. Role **Tech lead** → *Approve plan*
@@ -49,8 +60,8 @@ As **Admin**:
 - Secrets are references such as `env:JIRA_TOKEN`; set the variable on the server. See
   `backend/.env.example`.
 
-A real connection always replaces the demo one of the same type. Set `STUDIO_DEMO_MODE=false` to
-turn off demo data completely.
+A real connection always replaces the sample one of the same type. **Settings > General** also holds
+the target SAP release, used for generated code while no SAP system is connected.
 
 ## How it is built
 

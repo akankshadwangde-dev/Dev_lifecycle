@@ -24,4 +24,4 @@ app.include_router(settings_api.router)
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "demo_mode": settings.demo_mode, "version": app.version}
+    return {"status": "ok", "version": app.version}

@@ -10,12 +10,12 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", env_prefix="STUDIO_", extra="ignore")
 
-    # Demo mode seeds sample work items, Confluence pages and SAP code, and uses
-    # sample connectors and a sample model wherever no real one is configured.
-    demo_mode: bool = True
+    # Turn sample data on when the project is first created. Admins can switch it on or off
+    # later under Settings > General.
+    sample_data: bool = False
     data_dir: Path = BACKEND_DIR / "data"
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
-    default_project: str = "O2C Rollout"
+    default_project: str = "My SAP project"
 
     @property
     def database_url(self) -> str:

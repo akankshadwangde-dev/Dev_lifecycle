@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api } from '../api'
-import { Chip, Drawer, ErrorNote, Icon, PageHeader } from '../components'
+import { Chip, Drawer, Empty, ErrorNote, Icon } from '../components'
 import { useApp } from '../context'
 import type { ModelConfig, Provider } from '../types'
 
@@ -14,7 +14,7 @@ const LEVEL_HELP: Record<string, string> = {
 const EMPTY: Draft = { name: '', provider: 'anthropic', model: '', api_base: '', secret_ref: '', data_level: 'code', stages: [], enabled: true, priority: 100 }
 
 export default function ModelsPage() {
-  const { role, models, reloadModels } = useApp()
+  const { role, models, reloadModels, reloadProject } = useApp()
   const canManage = role === 'admin'
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -39,6 +39,7 @@ export default function ModelsPage() {
       else await api.post('/models', body)
       setDraft(null)
       reloadModels()
+      reloadProject()
     } catch (err) {
       setError((err as Error).message)
     }
@@ -48,6 +49,7 @@ export default function ModelsPage() {
     try {
       await api.del(`/models/${id}`)
       reloadModels()
+      reloadProject()
     } catch (err) {
       setError((err as Error).message)
     }
@@ -56,11 +58,13 @@ export default function ModelsPage() {
   const provider = draft && catalog ? catalog.providers[draft.provider] : null
 
   return (
-    <div className="page">
-      <PageHeader title="Models" subtitle="Any model your organisation allows. Users pick one in the top bar." help="models"
-        actions={canManage && <button className="btn btn-primary" onClick={() => setDraft({ ...EMPTY })}><Icon name="plus" size={16} />Add model</button>} />
+    <div className="stack">
+      <div className="section-head">
+        <p className="muted">Any model your organisation allows. Users pick one in the top bar.</p>
+        {canManage && <button className="btn btn-primary" onClick={() => setDraft({ ...EMPTY })}><Icon name="plus" size={16} />Add model</button>}
+      </div>
       {error && !draft && <ErrorNote message={error} />}
-      {!canManage && <div className="note">Only admins can add or change models.</div>}
+      {models.length === 0 ? <Empty title="No models yet">Add a model so the studio can analyse items.</Empty> : (
       <div className="table-wrap">
         <table>
           <thead><tr><th>Name</th><th>Provider</th><th>Data level</th><th>Default for</th><th>Status</th><th /></tr></thead>
@@ -91,6 +95,7 @@ export default function ModelsPage() {
           </tbody>
         </table>
       </div>
+      )}
 
       <Drawer open={!!draft} title={draft?.id ? 'Edit model' : 'Add model'} onClose={() => setDraft(null)}>
         {draft && catalog && (

@@ -3,7 +3,7 @@ import tempfile
 
 # Point the app at a throwaway data folder before anything imports the settings.
 os.environ["STUDIO_DATA_DIR"] = tempfile.mkdtemp(prefix="studio-test-")
-os.environ["STUDIO_DEMO_MODE"] = "true"
+os.environ["STUDIO_SAMPLE_DATA"] = "true"  # the flow tests run on the sample tickets
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

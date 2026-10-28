@@ -158,3 +158,12 @@ export interface AuditEntry {
   detail: string
   model: string
 }
+
+export interface Project {
+  id: number
+  name: string
+  sample_data: boolean
+  sap_release: number | null
+  sap_cloud: boolean
+  setup: { model: boolean; jira: boolean; confluence: boolean; sap: boolean; items: number }
+}

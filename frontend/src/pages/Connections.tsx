@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { api } from '../api'
-import { Chip, Drawer, Empty, ErrorNote, Icon, PageHeader } from '../components'
+import { Chip, Drawer, Empty, ErrorNote, Icon } from '../components'
+import { useApp } from '../context'
 import type { Connection } from '../types'
 
 type Draft = Omit<Connection, 'id' | 'status' | 'detail'>
@@ -14,6 +15,8 @@ const URL_HINT: Record<string, string> = {
 }
 
 export default function ConnectionsPage() {
+  const { role, reloadProject } = useApp()
+  const canManage = role === 'admin'
   const [conns, setConns] = useState<Connection[]>([])
   const [kinds, setKinds] = useState<Record<string, string>>({})
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -39,6 +42,7 @@ export default function ConnectionsPage() {
       const created = await api.post<Connection>('/connections', { ...draft, options })
       setDraft(null)
       await load()
+      reloadProject()
       test(created.id)
     } catch (err) {
       setError((err as Error).message)
@@ -58,15 +62,18 @@ export default function ConnectionsPage() {
   const remove = async (id: number) => {
     await api.del(`/connections/${id}`).catch(e => setError(e.message))
     load()
+    reloadProject()
   }
 
   return (
-    <div className="page">
-      <PageHeader title="Connections" subtitle="Where the studio reads tickets, documents and code." help="connections"
-        actions={<button className="btn btn-primary" onClick={() => setDraft({ ...EMPTY })}><Icon name="plus" size={16} />Add connection</button>} />
+    <div className="stack">
+      <div className="section-head">
+        <p className="muted">Where the studio reads tickets, documents and code.</p>
+        {canManage && <button className="btn btn-primary" onClick={() => setDraft({ ...EMPTY })}><Icon name="plus" size={16} />Add connection</button>}
+      </div>
       {error && !draft && <ErrorNote message={error} />}
       {conns.length === 0 ? (
-        <Empty title="No connections yet">Demo data is used until you add Jira, Confluence or an SAP system.</Empty>
+        <Empty title="No connections yet">Add Jira, Confluence or an SAP system. Until then, add items by hand on the home screen.</Empty>
       ) : (
         <div className="table-wrap">
           <table>
@@ -84,7 +91,7 @@ export default function ConnectionsPage() {
                   </td>
                   <td className="row push">
                     <button className="btn btn-sm" onClick={() => test(c.id)}>Test</button>
-                    <button className="btn btn-sm btn-ghost" onClick={() => remove(c.id)}>Remove</button>
+                    {canManage && <button className="btn btn-sm btn-ghost" onClick={() => remove(c.id)}>Remove</button>}
                   </td>
                 </tr>
               ))}

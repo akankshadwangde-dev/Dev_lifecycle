@@ -2,14 +2,22 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
-from ..deps import Ctx, CtxDep, SessionDep, audit
+from ..deps import Ctx, CtxDep, SessionDep, audit, require
 from ..models import WorkItem
 from ..orchestrator import flows
 from ..roles import may_decide
-from ..seed import upsert_items
+from ..seed import create_item, upsert_items
 from ..services import Services
 
 router = APIRouter(prefix="/api/work-items", tags=["work items"])
+
+
+class NewItem(BaseModel):
+    kind: str = "new"  # new | change | incident
+    title: str
+    description: str = ""
+    priority: str = ""
+    key: str = ""
 
 
 class Decision(BaseModel):
@@ -37,11 +45,26 @@ def list_items(ctx: Ctx = CtxDep, session: Session = SessionDep) -> list[dict]:
     return [{**i.model_dump(), "can_act": bool(i.gate) and may_decide(ctx.role, i.gate, "approve")} for i in items]
 
 
+@router.post("")
+def create(body: NewItem, ctx: Ctx = require("create_items"), session: Session = SessionDep) -> dict:
+    if body.kind not in ("new", "change", "incident"):
+        raise HTTPException(400, "Type must be new, change or incident")
+    if not body.title.strip():
+        raise HTTPException(400, "Give the item a title")
+    key = body.key.strip().upper()
+    if key and session.exec(select(WorkItem).where(WorkItem.project_id == ctx.project_id, WorkItem.key == key)).first():
+        raise HTTPException(409, f"{key} already exists")
+    item = create_item(session, ctx.project_id, body.kind, body.title.strip(), body.description.strip(),
+                       body.priority, key, assignee=ctx.user)
+    audit(session, ctx, "Added item", item.key)
+    return _detail(session, item, ctx)
+
+
 @router.post("/sync")
 def sync(ctx: Ctx = CtxDep, session: Session = SessionDep) -> dict:
     svc = Services(ctx.project_id)
     if svc.issues is None:
-        raise HTTPException(400, "No Jira connection is set up. Add one under Connections.")
+        raise HTTPException(400, "No Jira connection is set up. Add one under Settings > Connections, or add items by hand.")
     try:
         added = upsert_items(session, ctx.project_id, svc.issues.fetch_items())
     except Exception as exc:

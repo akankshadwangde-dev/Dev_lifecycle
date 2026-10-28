@@ -3,28 +3,28 @@
 ROLES: dict[str, dict] = {
     "developer": {
         "label": "Developer",
-        "can": {"view_code", "edit_code", "accept_recommendation", "request_plan", "submit_pages"},
+        "can": {"view_code", "edit_code", "accept_recommendation", "request_plan", "submit_pages", "create_items"},
     },
     "ams": {
         "label": "AMS consultant",
-        "can": {"view_code", "view_prod", "accept_recommendation", "resolve_no_code", "submit_pages"},
+        "can": {"view_code", "view_prod", "accept_recommendation", "resolve_no_code", "submit_pages", "create_items"},
     },
     "lead": {
         "label": "Tech lead",
         "can": {
             "view_code", "edit_code", "accept_recommendation", "resolve_no_code",
-            "approve_plan", "publish_pages", "approve_models",
+            "approve_plan", "publish_pages", "approve_models", "create_items",
         },
     },
     "architect": {
         "label": "Solution architect",
-        "can": {"view_code", "accept_recommendation", "approve_design"},
+        "can": {"view_code", "accept_recommendation", "approve_design", "create_items"},
     },
-    "functional": {"label": "Functional consultant", "can": set()},
+    "functional": {"label": "Functional consultant", "can": {"create_items"}},
     "pm": {"label": "Project manager", "can": set()},
     "admin": {
         "label": "Admin",
-        "can": {"manage_models", "manage_connections", "manage_knowledge"},
+        "can": {"manage_models", "manage_connections", "manage_knowledge", "manage_project"},
     },
 }
 

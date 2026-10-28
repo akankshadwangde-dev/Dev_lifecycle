@@ -28,7 +28,7 @@ class DemoConfluence:
         return [dict(p) for p in data.CONFLUENCE_PAGES]
 
     def publish(self, page: dict) -> dict:
-        return {"ref": f"CONF-{next(self._ids)}", "url": "", "simulated": True}
+        return {"ref": f"SAMPLE-{next(self._ids)}", "url": "", "simulated": True}
 
     def test(self) -> str:
         return "Sample data"

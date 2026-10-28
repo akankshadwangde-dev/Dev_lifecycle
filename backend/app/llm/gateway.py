@@ -44,7 +44,7 @@ class Gateway:
         options = candidates(self.models, stage, data_level, preferred_id)
         if not options:
             raise NoModelAvailable(
-                f"No enabled model is allowed to receive '{data_level}' data. Add or enable one under Models."
+                f"No enabled model is allowed to receive '{data_level}' data. Add or enable one under Settings > AI models."
             )
         errors = []
         for model in options:

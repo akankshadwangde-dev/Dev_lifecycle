@@ -61,6 +61,14 @@ class KnowledgeIndex:
             ).fetchall()
         return dict(rows)
 
+    def delete_refs(self, project_id: int, refs: list[str], prefixes: tuple[str, ...] = ()) -> None:
+        with self.lock:
+            for ref in refs:
+                self.conn.execute("DELETE FROM docs WHERE project_id = ? AND ref = ?", (project_id, ref))
+            for prefix in prefixes:
+                self.conn.execute("DELETE FROM docs WHERE project_id = ? AND ref LIKE ?", (project_id, f"{prefix}%"))
+            self.conn.commit()
+
     def clear_source(self, project_id: int, source: str) -> None:
         with self.lock:
             self.conn.execute("DELETE FROM docs WHERE project_id = ? AND source = ?", (project_id, source))

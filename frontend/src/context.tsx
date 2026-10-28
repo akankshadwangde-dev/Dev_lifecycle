@@ -1,14 +1,15 @@
 import { createContext, useContext } from 'react'
-import type { ModelConfig, Role } from './types'
+import type { ModelConfig, Project, Role } from './types'
 
 export interface AppContext {
   role: Role
   user: string
   models: ModelConfig[]
-  demo: boolean
+  project: Project | null
   openHelp: (topic: string) => void
   navigate: (hash: string) => void
   reloadModels: () => void
+  reloadProject: () => void
 }
 
 export const Ctx = createContext<AppContext | null>(null)

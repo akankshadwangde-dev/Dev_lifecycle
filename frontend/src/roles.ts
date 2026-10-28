@@ -1,6 +1,6 @@
 import type { Action, GateName, Kind, Role, WorkItem } from './types'
 
-export type PageKey = 'home' | 'knowledge' | 'models' | 'connections' | 'audit'
+export type PageKey = 'home' | 'knowledge' | 'audit' | 'settings'
 
 interface RoleInfo {
   label: string
@@ -8,24 +8,24 @@ interface RoleInfo {
   nav: PageKey[]
   startsKinds: Kind[] // kinds this role starts analysing
   viewCode: boolean
+  canCreate: boolean // can add items by hand
 }
 
 export const ROLES: Record<Role, RoleInfo> = {
-  developer: { label: 'Developer', home: 'My work', nav: ['home', 'knowledge', 'audit'], startsKinds: ['new', 'change'], viewCode: true },
-  ams: { label: 'AMS consultant', home: 'Incident desk', nav: ['home', 'knowledge', 'audit'], startsKinds: ['incident'], viewCode: true },
-  lead: { label: 'Tech lead', home: 'Approvals', nav: ['home', 'knowledge', 'models', 'audit'], startsKinds: ['new', 'change', 'incident'], viewCode: true },
-  architect: { label: 'Solution architect', home: 'Design reviews', nav: ['home', 'knowledge', 'audit'], startsKinds: ['new'], viewCode: true },
-  functional: { label: 'Functional consultant', home: 'Requirements', nav: ['home', 'knowledge'], startsKinds: [], viewCode: false },
-  pm: { label: 'Project manager', home: 'Delivery overview', nav: ['home', 'audit'], startsKinds: [], viewCode: false },
-  admin: { label: 'Admin', home: 'Platform', nav: ['home', 'models', 'connections', 'knowledge', 'audit'], startsKinds: [], viewCode: false },
+  developer: { label: 'Developer', home: 'My work', nav: ['home', 'knowledge', 'audit', 'settings'], startsKinds: ['new', 'change'], viewCode: true, canCreate: true },
+  ams: { label: 'AMS consultant', home: 'Incident desk', nav: ['home', 'knowledge', 'audit', 'settings'], startsKinds: ['incident'], viewCode: true, canCreate: true },
+  lead: { label: 'Tech lead', home: 'Approvals', nav: ['home', 'knowledge', 'audit', 'settings'], startsKinds: ['new', 'change', 'incident'], viewCode: true, canCreate: true },
+  architect: { label: 'Solution architect', home: 'Design reviews', nav: ['home', 'knowledge', 'audit', 'settings'], startsKinds: ['new'], viewCode: true, canCreate: true },
+  functional: { label: 'Functional consultant', home: 'Requirements', nav: ['home', 'knowledge', 'settings'], startsKinds: [], viewCode: false, canCreate: true },
+  pm: { label: 'Project manager', home: 'Delivery overview', nav: ['home', 'audit', 'settings'], startsKinds: [], viewCode: false, canCreate: false },
+  admin: { label: 'Admin', home: 'Platform', nav: ['home', 'knowledge', 'audit', 'settings'], startsKinds: [], viewCode: false, canCreate: false },
 }
 
 export const PAGE_LABELS: Record<PageKey, string> = {
   home: 'Home',
   knowledge: 'Knowledge',
-  models: 'Models',
-  connections: 'Connections',
   audit: 'Audit trail',
+  settings: 'Settings',
 }
 
 export const KIND_LABELS: Record<Kind, string> = { new: 'New requirement', change: 'Change', incident: 'Incident' }

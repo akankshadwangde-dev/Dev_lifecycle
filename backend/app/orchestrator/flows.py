@@ -91,6 +91,14 @@ def retry(session: Session, item: WorkItem) -> None:
     _run(session, item, None)
 
 
+def delete_flow(item: WorkItem) -> None:
+    """Forget a work item's saved flow (used when sample data is removed)."""
+    try:
+        get_graph().checkpointer.delete_thread(_config(item)["configurable"]["thread_id"])
+    except Exception:
+        pass  # nothing saved for this item
+
+
 def view(item: WorkItem, role: str) -> dict:
     snapshot = get_graph().get_state(_config(item))
     values = snapshot.values or {}

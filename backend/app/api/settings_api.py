@@ -8,10 +8,11 @@ from ..deps import Ctx, CtxDep, SessionDep, audit, require
 from ..knowledge import get_index, reindex
 from ..llm.gateway import call_model
 from ..llm.providers import DATA_LEVELS, PROVIDERS, STAGES
-from ..models import AuditEntry, Connection, ModelConfig
+from ..models import AuditEntry, Connection, ModelConfig, Project, WorkItem
 from ..roles import GATES, ROLES
 from ..services import CONNECTION_KINDS, Services, build_connector
 from ..connectors.sap_profiles import detect
+from ..seed import load_sample_data, remove_sample_data
 
 router = APIRouter(prefix="/api", tags=["settings"])
 
@@ -22,6 +23,56 @@ router = APIRouter(prefix="/api", tags=["settings"])
 def roles() -> dict:
     return {"roles": {k: {"label": v["label"], "can": sorted(v["can"])} for k, v in ROLES.items()},
             "gates": {g: {a: sorted(c) for a, c in actions.items()} for g, actions in GATES.items()}}
+
+
+# ---------- project ----------
+
+class ProjectIn(BaseModel):
+    name: str
+    sap_release: int | None = None
+    sap_cloud: bool = False
+    sample_data: bool = False
+
+
+def _project_view(session: Session, project: Project) -> dict:
+    conns = session.exec(select(Connection).where(Connection.project_id == project.id)).all()
+    models = session.exec(select(ModelConfig).where(ModelConfig.project_id == project.id,
+                                                    ModelConfig.enabled == True)).all()  # noqa: E712
+    items = session.exec(select(WorkItem.id).where(WorkItem.project_id == project.id)).all()
+    kinds = {c.kind for c in conns}
+    return {**project.model_dump(), "setup": {
+        "model": bool(models), "jira": "jira" in kinds, "confluence": "confluence" in kinds,
+        "sap": bool(kinds & {"sap_adt", "sap_rfc"}), "items": len(items),
+    }}
+
+
+@router.get("/project")
+def get_project(ctx: Ctx = CtxDep, session: Session = SessionDep) -> dict:
+    project = session.get(Project, ctx.project_id)
+    if project is None:
+        raise HTTPException(404, "Project not found")
+    return _project_view(session, project)
+
+
+@router.put("/project")
+def update_project(body: ProjectIn, ctx: Ctx = require("manage_project"), session: Session = SessionDep) -> dict:
+    project = session.get(Project, ctx.project_id)
+    if project is None:
+        raise HTTPException(404, "Project not found")
+    if not body.name.strip():
+        raise HTTPException(400, "The project needs a name")
+    project.name, project.sap_release, project.sap_cloud = body.name.strip(), body.sap_release, body.sap_cloud
+    session.add(project)
+    session.commit()
+    if body.sample_data and not project.sample_data:
+        load_sample_data(session, project)
+        audit(session, ctx, "Turned sample data on")
+    elif not body.sample_data and project.sample_data:
+        remove_sample_data(session, project)
+        audit(session, ctx, "Turned sample data off")
+    audit(session, ctx, "Changed project settings")
+    session.refresh(project)
+    return _project_view(session, project)
 
 
 # ---------- models ----------

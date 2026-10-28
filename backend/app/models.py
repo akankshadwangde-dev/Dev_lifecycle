@@ -13,6 +13,11 @@ class Project(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     description: str = ""
+    # Sample tickets, pages, SAP code and a sample model, for demos. Off unless an admin turns it on.
+    sample_data: bool = False
+    # Target release for generated code while no SAP system is connected (SAP_BASIS, e.g. 758).
+    sap_release: int | None = None
+    sap_cloud: bool = False
 
 
 class ModelConfig(SQLModel, table=True):

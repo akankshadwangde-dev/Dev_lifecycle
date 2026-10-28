@@ -150,6 +150,30 @@ textarea { width: 100%; resize: vertical; }
 .stage-bar .bar div { height: 100%; background: var(--accent); border-radius: 4px; }
 .stage-bar b { text-align: right; font-variant-numeric: tabular-nums; }
 
+.project-name { color: var(--muted); font-size: 13px; padding-left: 12px; border-left: 1px solid var(--line); }
+a.chip:hover { text-decoration: none; filter: brightness(0.97); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs a { padding: 8px 14px; color: var(--muted); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs a:hover { color: var(--ink); text-decoration: none; }
+.tabs a.on { color: var(--ink); border-bottom-color: var(--accent); }
+.settings-form { max-width: 620px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.form.settings-form > fieldset { gap: 18px; }
+.field-group { display: flex; flex-direction: column; gap: 6px; }
+.field-title { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.switch-row { align-items: flex-start !important; }
+.switch-row input { margin-top: 3px; }
+
+.setup { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.setup ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.setup li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.setup .tick { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; }
+.setup li.done .tick { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.setup li.done .what { color: var(--muted); text-decoration: line-through; }
+.kind-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.kind-pick button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 8px; cursor: pointer; font-weight: 500; }
+.kind-pick button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
 /* ---------- item page ---------- */
 .back { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 13px; width: fit-content; }
 .item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }

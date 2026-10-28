@@ -4,15 +4,15 @@ import { Drawer, Icon } from './components'
 import { Ctx, type AppContext } from './context'
 import { HELP } from './help'
 import { PAGE_LABELS, ROLES, type PageKey } from './roles'
-import type { ModelConfig, Role } from './types'
+import type { ModelConfig, Project, Role } from './types'
 import Home from './pages/Home'
 import ItemPage from './pages/Item'
 import KnowledgePage from './pages/Knowledge'
-import ModelsPage from './pages/Models'
-import ConnectionsPage from './pages/Connections'
+import SettingsPage, { type SettingsTab } from './pages/Settings'
 import AuditPage from './pages/Audit'
 
-const NAV_ICONS: Record<PageKey, string> = { home: 'home', knowledge: 'book', models: 'chip', connections: 'plug', audit: 'list' }
+const NAV_ICONS: Record<PageKey, string> = { home: 'home', knowledge: 'book', audit: 'list', settings: 'gear' }
+const SETTINGS_TABS: SettingsTab[] = ['general', 'models', 'connections']
 
 function readStored<T>(key: string, fallback: T): T {
   try {
@@ -31,9 +31,12 @@ function store(key: string, value: unknown) {
   }
 }
 
-function parseHash(hash: string): { page: PageKey | 'item'; key?: string } {
-  const [, page, key] = hash.replace(/^#/, '').split('/')
-  if (page === 'item' && key) return { page: 'item', key: decodeURIComponent(key) }
+type Route = { page: PageKey | 'item'; key?: string; tab?: SettingsTab }
+
+function parseHash(hash: string): Route {
+  const [, page, sub] = hash.replace(/^#/, '').split('/')
+  if (page === 'item' && sub) return { page: 'item', key: decodeURIComponent(sub) }
+  if (page === 'settings') return { page: 'settings', tab: SETTINGS_TABS.includes(sub as SettingsTab) ? (sub as SettingsTab) : 'general' }
   if (page && page in PAGE_LABELS) return { page: page as PageKey }
   return { page: 'home' }
 }
@@ -43,10 +46,11 @@ export default function App() {
   const [user, setUser] = useState<string>(() => readStored('studio.user', 'demo.user'))
   const [modelId, setModelId] = useState<number | null>(() => readStored('studio.model', null))
   const [models, setModels] = useState<ModelConfig[]>([])
-  const [demo, setDemo] = useState(false)
+  const [project, setProject] = useState<Project | null>(null)
   const [route, setRoute] = useState(() => parseHash(window.location.hash))
   const [helpTopic, setHelpTopic] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
+  const [offline, setOffline] = useState(false)
 
   setIdentity({ user, role, modelId })
 
@@ -59,21 +63,32 @@ export default function App() {
   const reloadModels = useCallback(() => {
     api.get<ModelConfig[]>('/models').then(setModels).catch(() => setModels([]))
   }, [])
+  const reloadProject = useCallback(() => {
+    api.get<Project>('/project').then(p => { setProject(p); setOffline(false) }).catch(() => setOffline(true)).finally(() => setReady(true))
+  }, [])
 
   useEffect(() => {
-    api.get<{ demo_mode: boolean }>('/health').then(h => setDemo(h.demo_mode)).catch(() => undefined).finally(() => setReady(true))
+    reloadProject()
     reloadModels()
-  }, [reloadModels])
+  }, [reloadModels, reloadProject])
 
   // A role without access to the current page lands on its home screen.
   useEffect(() => {
     if (route.page !== 'item' && !ROLES[role].nav.includes(route.page)) window.location.hash = '#/home'
   }, [role, route.page])
 
+  // Forget a chosen model that no longer exists.
+  useEffect(() => {
+    if (modelId != null && models.length && !models.some(m => m.id === modelId && m.enabled)) {
+      setModelId(null)
+      store('studio.model', null)
+    }
+  }, [models, modelId])
+
   const changeRole = (next: Role) => {
     setRole(next)
     store('studio.role', next)
-    window.location.hash = '#/home'
+    if (route.page !== 'settings') window.location.hash = '#/home'
   }
   const changeModel = (value: string) => {
     const id = value ? Number(value) : null
@@ -82,26 +97,28 @@ export default function App() {
   }
 
   const ctx: AppContext = useMemo(() => ({
-    role, user, models, demo, reloadModels,
+    role, user, models, project, reloadModels, reloadProject,
     openHelp: (topic: string) => setHelpTopic(topic),
     navigate: (hash: string) => { window.location.hash = hash },
-  }), [role, user, models, demo, reloadModels])
+  }), [role, user, models, project, reloadModels, reloadProject])
 
   const enabledModels = models.filter(m => m.enabled)
   const helpKey = helpTopic && HELP[helpTopic] ? helpTopic : 'start'
   const help = HELP[helpKey]
+  const pageHelp = route.page === 'item' ? 'item' : route.page
 
   return (
     <Ctx.Provider value={ctx}>
       <div className="shell">
         <header className="topbar">
           <a className="brand" href="#/home"><span className="brand-mark">AB</span>Lifecycle Studio</a>
-          {demo && <span className="chip chip-warn" title="Sample data and sample AI answers are used where nothing real is connected">Demo data</span>}
+          {project && <span className="project-name">{project.name}</span>}
+          {project?.sample_data && <a className="chip chip-warn" href="#/settings/general" title="Sample tickets, pages and code are shown. Turn off under Settings.">Sample data</a>}
           <div className="topbar-controls">
             <label className="select-label">
               <span>Model</span>
               <select value={modelId ?? ''} onChange={e => changeModel(e.target.value)} aria-label="Model">
-                <option value="">Auto</option>
+                <option value="">{enabledModels.length ? 'Auto' : 'None set up'}</option>
                 {enabledModels.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
             </label>
@@ -113,7 +130,7 @@ export default function App() {
             </label>
             <input className="user-input" value={user} aria-label="Your name"
               onChange={e => { setUser(e.target.value); store('studio.user', e.target.value) }} />
-            <button className="icon-btn" onClick={() => setHelpTopic(route.page === 'item' ? 'item' : route.page)} aria-label="Help" title="Help">
+            <button className="icon-btn" onClick={() => setHelpTopic(pageHelp)} aria-label="Help" title="Help">
               <Icon name="help" />
             </button>
           </div>
@@ -132,10 +149,13 @@ export default function App() {
         </nav>
 
         <main className="content">
-          {!ready ? null : route.page === 'item' && route.key ? <ItemPage key={`${route.key}-${role}`} itemKey={route.key} />
+          {!ready ? null
+            : offline ? (
+              <div className="page"><div className="note note-bad">The server is not reachable. Start the backend (start-dev.cmd) and refresh this page.</div></div>
+            )
+            : route.page === 'item' && route.key ? <ItemPage key={`${route.key}-${role}`} itemKey={route.key} />
             : route.page === 'knowledge' ? <KnowledgePage />
-            : route.page === 'models' ? <ModelsPage />
-            : route.page === 'connections' ? <ConnectionsPage />
+            : route.page === 'settings' ? <SettingsPage tab={route.tab ?? 'general'} />
             : route.page === 'audit' ? <AuditPage />
             : <Home key={role} />}
         </main>
